@@ -1,0 +1,2438 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bunker — Le vrai du faux de l'info</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════
+   DESIGN SYSTEM
+   Palette : bleu nuit profond, gradient azur,
+   blanc doux, rouge pour l'alerte seulement.
+   Typo : DM Serif Display (douceur + autorité)
+          DM Sans (lisibilité calme)
+          DM Mono (données techniques)
+   ═══════════════════════════════════════════════ */
+:root {
+  /* Blues — du plus sombre au plus clair */
+  --blue-950: #05080f;
+  --blue-900: #070d1a;
+  --blue-850: #091224;
+  --blue-800: #0c1a35;
+  --blue-700: #102247;
+  --blue-600: #153060;
+  --blue-500: #1d4080;
+  --blue-400: #2a5ba8;
+  --blue-300: #4a7fd4;
+  --blue-200: #7aaee8;
+  --blue-100: #b8d4f5;
+  --blue-50:  #ddeeff;
+
+  /* Gradient principal du background */
+  --grad-bg: linear-gradient(160deg,
+    #060c1c 0%,
+    #091628 18%,
+    #0d2040 36%,
+    #102850 52%,
+    #0e2244 68%,
+    #091630 84%,
+    #060c1c 100%
+  );
+
+  /* Surfaces */
+  --surface-1: rgba(255,255,255,0.04);
+  --surface-2: rgba(255,255,255,0.07);
+  --surface-3: rgba(255,255,255,0.10);
+  --surface-glow: rgba(74,127,212,0.12);
+
+  /* Bordures */
+  --border-subtle: rgba(255,255,255,0.08);
+  --border-mid:    rgba(255,255,255,0.14);
+  --border-strong: rgba(255,255,255,0.22);
+  --border-blue:   rgba(74,127,212,0.35);
+
+  /* Textes */
+  --text-primary:   #eef4ff;
+  --text-secondary: #9bb8e0;
+  --text-muted:     #5a7aaa;
+  --text-faint:     #3a5070;
+
+  /* Accents */
+  --accent:       #4a7fd4;
+  --accent-light: #7aaee8;
+  --accent-glow:  rgba(74,127,212,0.4);
+
+  /* Verdicts — rouge uniquement pour faux, touches discrètes */
+  --vrai:     #34d399;
+  --vrai-dim: rgba(52,211,153,0.12);
+  --faux:     #e05252;
+  --faux-dim: rgba(224,82,82,0.12);
+  --partiel:  #f0a44a;
+  --partiel-dim: rgba(240,164,74,0.12);
+  --inconnu:  var(--blue-300);
+  --inconnu-dim: rgba(74,127,212,0.12);
+}
+
+/* ═══ RESET ═══ */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  background: var(--blue-950);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ═══ GRADIENT BACKGROUND GLOBAL ═══ */
+.page-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: var(--grad-bg);
+}
+
+/* Lumière bleue animée en fond */
+.page-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 10%, rgba(29,64,128,0.5) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 80% 90%, rgba(21,48,96,0.6) 0%, transparent 55%),
+    radial-gradient(ellipse 40% 40% at 60% 30%, rgba(74,127,212,0.08) 0%, transparent 50%);
+  animation: bgBreath 12s ease-in-out infinite alternate;
+}
+
+@keyframes bgBreath {
+  0%   { opacity: 0.7; }
+  100% { opacity: 1; }
+}
+
+/* Subtile grille de points */
+.page-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(74,127,212,0.18) 1px, transparent 1px);
+  background-size: 36px 36px;
+  opacity: 0.4;
+}
+
+/* ═══ NEWS BACKGROUND ═══ */
+.news-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Voile spotlight : net au centre, fondu aux bords */
+.news-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  background: radial-gradient(
+    ellipse 52% 42% at 50% 48%,
+    transparent 0%,
+    transparent 28%,
+    rgba(6,12,28,0.55) 58%,
+    rgba(6,12,28,0.92) 85%,
+    rgba(6,12,28,0.98) 100%
+  );
+}
+
+.news-track {
+  position: absolute;
+  display: flex;
+  gap: 1.8rem;
+  white-space: nowrap;
+  will-change: transform;
+  z-index: 2;
+}
+
+.news-track.r1 { top:  4%; animation: sL 110s linear infinite; filter: blur(2.8px); opacity: 0.32; }
+.news-track.r2 { top: 20%; animation: sR  90s linear infinite; filter: blur(1.2px); opacity: 0.48; }
+.news-track.r3 { top: 40%; animation: sL 130s linear infinite; filter: blur(0px);   opacity: 0.25; }
+.news-track.r4 { top: 60%; animation: sR 100s linear infinite; filter: blur(1.8px); opacity: 0.42; }
+.news-track.r5 { top: 79%; animation: sL 120s linear infinite; filter: blur(3.5px); opacity: 0.28; }
+
+@keyframes sL { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes sR { from { transform: translateX(-50%); } to { transform: translateX(0); } }
+
+.nc {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.9rem 1.3rem;
+  background: rgba(9,18,36,0.82);
+  border: 1px solid var(--border-subtle);
+  border-left: 2px solid transparent;
+  border-radius: 6px;
+  min-width: 370px;
+  max-width: 370px;
+  backdrop-filter: blur(4px);
+}
+
+.nc[data-v="true"]    { border-left-color: var(--vrai); }
+.nc[data-v="false"]   { border-left-color: var(--faux); }
+.nc[data-v="partial"] { border-left-color: var(--partiel); }
+.nc[data-v="unknown"] { border-left-color: var(--accent); }
+
+.nc-top {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.nc-src { color: var(--text-muted); font-weight: 500; }
+
+.nc-v {
+  font-size: 0.58rem;
+  font-family: 'DM Mono', monospace;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+}
+
+.nc[data-v="true"]    .nc-v { color: var(--vrai); }
+.nc[data-v="false"]   .nc-v { color: var(--faux); }
+.nc[data-v="partial"] .nc-v { color: var(--partiel); }
+.nc[data-v="unknown"] .nc-v { color: var(--accent); }
+
+.nc-hl {
+  font-family: 'DM Serif Display', serif;
+  font-size: 0.95rem;
+  color: rgba(238,244,255,0.9);
+  line-height: 1.35;
+  white-space: normal;
+}
+
+.nc-bot {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.54rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+/* ═══ NAVIGATION ═══ */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 3rem;
+  background: rgba(6,12,28,0.7);
+  backdrop-filter: blur(20px) saturate(160%);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.nav-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.nav-name {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.5rem;
+  color: var(--text-primary);
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
+.nav-name em {
+  font-style: normal;
+  color: var(--accent-light);
+}
+
+.nav-tagline-sm {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.5rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.nav-links {
+  display: flex;
+  gap: 2.2rem;
+  list-style: none;
+}
+
+.nav-links a {
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--text-secondary);
+  text-decoration: none;
+  letter-spacing: 0.02em;
+  transition: color 0.2s;
+  cursor: pointer;
+}
+
+.nav-links a:hover { color: var(--text-primary); }
+
+.nav-cta {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 0.55rem 1.4rem;
+  border-radius: 6px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  letter-spacing: 0.03em;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.nav-cta:hover {
+  background: var(--blue-300);
+  box-shadow: 0 0 20px var(--accent-glow);
+}
+
+@media (max-width: 768px) {
+  nav { padding: 0 1.2rem; }
+  .nav-links { display: none; }
+}
+
+/* ═══ HERO ═══ */
+.hero {
+  position: relative;
+  z-index: 10;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 90px 2rem 4rem;
+  text-align: center;
+}
+
+/* Badge live */
+.hero-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border-mid);
+  border-radius: 100px;
+  padding: 0.45rem 1.1rem 0.45rem 0.7rem;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: 2.8rem;
+  animation: riseIn 0.7s ease both;
+  backdrop-filter: blur(8px);
+}
+
+.live-pip {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--vrai);
+  box-shadow: 0 0 0 0 rgba(52,211,153,0.6);
+  animation: pipPulse 2s ease infinite;
+  flex-shrink: 0;
+}
+
+@keyframes pipPulse {
+  0%   { box-shadow: 0 0 0 0   rgba(52,211,153,0.6); }
+  60%  { box-shadow: 0 0 0 8px rgba(52,211,153,0); }
+  100% { box-shadow: 0 0 0 0   rgba(52,211,153,0); }
+}
+
+/* Titre principal */
+.hero-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(5.5rem, 18vw, 14rem);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 0.92;
+  color: var(--text-primary);
+  margin-bottom: 1.2rem;
+  animation: riseIn 0.7s ease 0.1s both;
+  position: relative;
+  display: inline-block;
+}
+
+/* Ligne de soulignement bleu lumineux */
+.hero-title::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 10%;
+  right: 10%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), var(--blue-200), var(--accent), transparent);
+  border-radius: 2px;
+  opacity: 0.7;
+}
+
+.hero-sub {
+  font-family: 'DM Sans', sans-serif;
+  font-size: clamp(0.95rem, 2vw, 1.2rem);
+  font-weight: 300;
+  color: var(--text-secondary);
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  margin-bottom: 3.5rem;
+  animation: riseIn 0.7s ease 0.2s both;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.sub-line {
+  width: 32px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent));
+  flex-shrink: 0;
+}
+
+.sub-line.r { background: linear-gradient(270deg, transparent, var(--accent)); }
+
+/* ═══ SEARCH ═══ */
+.search-wrapper {
+  width: 100%;
+  max-width: 700px;
+  animation: riseIn 0.7s ease 0.3s both;
+  position: relative;
+}
+
+/* Lueur sous la barre */
+.search-glow-ring {
+  position: absolute;
+  inset: -24px;
+  background: radial-gradient(ellipse at center,
+    rgba(74,127,212,0.18) 0%,
+    rgba(29,64,128,0.1) 45%,
+    transparent 70%
+  );
+  filter: blur(20px);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.search-box-wrap {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border-mid);
+  border-radius: 12px;
+  backdrop-filter: blur(24px) saturate(160%);
+  overflow: hidden;
+  transition: border-color 0.25s, box-shadow 0.25s;
+}
+
+.search-box-wrap:focus-within {
+  border-color: var(--accent);
+  box-shadow:
+    0 0 0 4px rgba(74,127,212,0.12),
+    0 24px 60px -16px rgba(6,12,28,0.8);
+}
+
+/* Barre d'étiquette en haut de la search box */
+.search-label-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 1.2rem;
+  border-bottom: 1px solid var(--border-subtle);
+  background: rgba(255,255,255,0.03);
+}
+
+.slb-left {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.slb-right {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--vrai);
+}
+
+.slb-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--vrai);
+  animation: pipPulse 2s ease infinite;
+}
+
+.search-row {
+  display: flex;
+  align-items: stretch;
+}
+
+.search-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 1.15rem 1.2rem;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 300;
+  color: var(--text-primary);
+  letter-spacing: 0.01em;
+}
+
+.search-input::placeholder {
+  color: var(--text-faint);
+  font-style: italic;
+  font-weight: 300;
+}
+
+.search-btn {
+  flex-shrink: 0;
+  background: var(--accent);
+  border: none;
+  padding: 0 1.8rem;
+  color: #fff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+  border-left: 1px solid rgba(255,255,255,0.1);
+}
+
+.search-btn:hover {
+  background: var(--blue-300);
+  box-shadow: -8px 0 30px rgba(74,127,212,0.25);
+}
+
+.search-btn:active { opacity: 0.9; }
+
+/* Chips suggestions */
+.chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  justify-content: center;
+  margin-top: 1.4rem;
+  animation: riseIn 0.7s ease 0.45s both;
+}
+
+.chip {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  padding: 0.4rem 0.9rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border-subtle);
+  border-radius: 100px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  backdrop-filter: blur(6px);
+}
+
+.chip:hover {
+  background: rgba(74,127,212,0.12);
+  border-color: var(--border-blue);
+  color: var(--blue-50);
+  transform: translateY(-1px);
+}
+
+/* ═══ RÉSULTAT ═══ */
+.result-wrap {
+  width: 100%;
+  max-width: 700px;
+  margin-top: 1.8rem;
+  display: none;
+  animation: riseIn 0.45s ease both;
+  position: relative;
+  z-index: 10;
+}
+
+.result-wrap.show { display: block; }
+
+.result-card {
+  background: rgba(9,18,36,0.92);
+  border: 1px solid var(--border-mid);
+  border-radius: 12px;
+  overflow: hidden;
+  backdrop-filter: blur(24px);
+  box-shadow: 0 24px 80px -20px rgba(6,12,28,0.9);
+}
+
+/* Bande verdict colorée en haut */
+.verdict-header {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.verdict-label {
+  padding: 0.75rem 1.5rem;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #fff;
+  min-width: 160px;
+}
+
+.verdict-label.true    { background: rgba(52,211,153,0.2);  color: var(--vrai); }
+.verdict-label.false   { background: rgba(224,82,82,0.2);   color: var(--faux); }
+.verdict-label.partial { background: rgba(240,164,74,0.2);  color: var(--partiel); }
+.verdict-label.loading { background: rgba(74,127,212,0.15); color: var(--accent-light); }
+
+.verdict-conf {
+  padding: 0.75rem 1.5rem;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  border-left: 1px solid var(--border-subtle);
+}
+
+.verdict-sig {
+  margin-left: auto;
+  padding: 0.75rem 1.2rem;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  color: var(--text-faint);
+  border-left: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.result-body {
+  padding: 1.6rem 1.8rem;
+}
+
+.result-text {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.98rem;
+  font-weight: 300;
+  line-height: 1.75;
+  color: var(--text-secondary);
+  margin-bottom: 1.4rem;
+  padding-left: 1rem;
+  border-left: 2px solid var(--border-blue);
+}
+
+.sources-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+  padding-top: 1.1rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.src-lbl {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  flex-shrink: 0;
+  margin-right: 0.2rem;
+}
+
+.src-tag {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.68rem;
+  padding: 0.22rem 0.65rem;
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  color: var(--text-muted);
+  letter-spacing: 0.03em;
+}
+
+/* ═══ SECTION WRAP ═══ */
+.section-wrap {
+  position: relative;
+  z-index: 5;
+}
+
+/* Séparateur de sections */
+.sep {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-mid), transparent);
+  position: relative;
+  z-index: 5;
+}
+
+section {
+  max-width: 1260px;
+  margin: 0 auto;
+  padding: 7rem 2rem;
+}
+
+.eyebrow {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--accent-light);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.eyebrow::before {
+  content: '';
+  width: 22px; height: 1px;
+  background: var(--accent);
+  display: inline-block;
+}
+
+.sec-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(2.4rem, 5.5vw, 4.2rem);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  color: var(--text-primary);
+  margin-bottom: 1.5rem;
+}
+
+.sec-title em {
+  font-style: italic;
+  color: var(--accent-light);
+}
+
+.sec-desc {
+  font-size: 1rem;
+  font-weight: 300;
+  line-height: 1.8;
+  color: var(--text-secondary);
+  max-width: 540px;
+}
+
+/* ═══ STATS ═══ */
+.stats-band {
+  position: relative;
+  z-index: 5;
+  background: rgba(9,22,48,0.6);
+  border-top: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+  backdrop-filter: blur(12px);
+}
+
+.stats-inner {
+  max-width: 1260px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  padding: 0 2rem;
+}
+
+@media (max-width: 768px) { .stats-inner { grid-template-columns: repeat(2,1fr); } }
+
+.stat {
+  padding: 3rem 1.5rem;
+  text-align: center;
+  border-right: 1px solid var(--border-subtle);
+  transition: background 0.3s;
+}
+
+.stat:last-child { border-right: none; }
+.stat:hover { background: rgba(255,255,255,0.03); }
+
+.stat-num {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(2.6rem, 4vw, 3.5rem);
+  color: var(--text-primary);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.stat-num b { color: var(--accent-light); font-weight: 400; }
+
+.stat-lbl {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-top: 0.6rem;
+}
+
+/* ═══ HOW IT WORKS ═══ */
+.how-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-top: 4rem;
+}
+
+@media (max-width: 768px) { .how-grid { grid-template-columns: 1fr; } }
+
+.how-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 2.4rem;
+  transition: background 0.3s, border-color 0.3s, transform 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+
+.how-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(74,127,212,0.08) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.how-card:hover {
+  background: var(--surface-2);
+  border-color: var(--border-blue);
+  transform: translateY(-4px);
+}
+
+.how-card:hover::before { opacity: 1; }
+
+.how-num {
+  font-family: 'DM Serif Display', serif;
+  font-size: 4.5rem;
+  color: var(--accent);
+  opacity: 0.12;
+  line-height: 1;
+  margin-bottom: 0.5rem;
+  font-weight: 400;
+  letter-spacing: -0.03em;
+}
+
+.how-icon {
+  width: 44px; height: 44px;
+  border-radius: 10px;
+  background: var(--surface-glow);
+  border: 1px solid var(--border-blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.4rem;
+  color: var(--accent-light);
+}
+
+.how-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.35rem;
+  font-weight: 400;
+  color: var(--text-primary);
+  margin-bottom: 0.8rem;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+
+.how-desc {
+  font-size: 0.92rem;
+  font-weight: 300;
+  line-height: 1.75;
+  color: var(--text-secondary);
+}
+
+/* ═══ TRENDING ═══ */
+.trend-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 3rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--surface-1);
+  border: 1px solid var(--border-mid);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  padding: 0.6rem 1.2rem;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.refresh-btn:hover {
+  background: var(--surface-glow);
+  border-color: var(--border-blue);
+  color: var(--accent-light);
+}
+
+.refresh-btn.spin svg { animation: rot 1s linear infinite; }
+@keyframes rot { to { transform: rotate(360deg); } }
+
+.trend-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.2rem;
+}
+
+.trend-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 1.6rem;
+  cursor: pointer;
+  transition: all 0.25s;
+  position: relative;
+  overflow: hidden;
+}
+
+.trend-card::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 2px;
+  border-radius: 10px 10px 0 0;
+}
+
+.trend-card[data-v="true"]::after    { background: var(--vrai); }
+.trend-card[data-v="false"]::after   { background: var(--faux); }
+.trend-card[data-v="partial"]::after { background: var(--partiel); }
+
+.trend-card:hover {
+  background: var(--surface-2);
+  border-color: var(--border-mid);
+  transform: translateY(-3px);
+  box-shadow: 0 16px 48px -12px rgba(6,12,28,0.7);
+}
+
+.trend-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.trend-topic {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.trend-badge {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 0.2rem 0.65rem;
+  border-radius: 100px;
+  letter-spacing: 0.05em;
+}
+
+.trend-badge.true    { background: var(--vrai-dim);    color: var(--vrai); }
+.trend-badge.false   { background: var(--faux-dim);    color: var(--faux); }
+.trend-badge.partial { background: var(--partiel-dim); color: var(--partiel); }
+
+.trend-hl {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.08rem;
+  font-weight: 400;
+  color: var(--text-primary);
+  line-height: 1.35;
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.01em;
+}
+
+.trend-sub {
+  font-size: 0.86rem;
+  font-weight: 300;
+  line-height: 1.65;
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+}
+
+.trend-footer {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--border-subtle);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.06em;
+  color: var(--text-faint);
+}
+
+/* ═══ MAP ═══ */
+.map-layout {
+  display: grid;
+  grid-template-columns: 1fr 1.35fr;
+  gap: 5rem;
+  align-items: start;
+}
+
+@media (max-width: 900px) { .map-layout { grid-template-columns: 1fr; gap: 3rem; } }
+
+.map-frame {
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+}
+
+.map-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1.2rem;
+  border-bottom: 1px solid var(--border-subtle);
+  background: rgba(255,255,255,0.03);
+}
+
+.map-header-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.map-count-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  color: var(--accent-light);
+}
+
+.map-frame svg { width: 100%; height: auto; display: block; padding: 1.2rem; }
+
+.cp {
+  fill: rgba(29,64,128,0.6);
+  stroke: rgba(74,127,212,0.25);
+  stroke-width: 0.5;
+  cursor: pointer;
+  transition: fill 0.2s;
+}
+
+.cp:hover { fill: rgba(74,127,212,0.4); }
+.cp.on { fill: var(--vrai); filter: drop-shadow(0 0 6px rgba(52,211,153,0.5)); }
+
+.map-tip {
+  position: absolute;
+  background: rgba(6,12,28,0.95);
+  border: 1px solid var(--border-mid);
+  border-radius: 6px;
+  padding: 0.45rem 0.85rem;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.68rem;
+  color: var(--text-primary);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.12s;
+  z-index: 20;
+  white-space: nowrap;
+  letter-spacing: 0.06em;
+}
+
+.map-tip.vis { opacity: 1; }
+
+.chips-box {
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 1.8rem;
+}
+
+.chips-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid var(--border-subtle);
+  background: rgba(255,255,255,0.02);
+}
+
+.chips-head-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.clear-btn {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  color: var(--faux);
+  cursor: pointer;
+  transition: color 0.2s;
+  display: none;
+}
+
+.clear-btn:hover { color: #ff6b6b; }
+
+.chips-body {
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  min-height: 52px;
+}
+
+.c-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: var(--vrai-dim);
+  border: 1px solid rgba(52,211,153,0.25);
+  border-radius: 100px;
+  padding: 0.28rem 0.75rem;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.68rem;
+  color: var(--vrai);
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.03em;
+}
+
+.c-chip:hover { background: var(--faux-dim); border-color: rgba(224,82,82,0.3); color: var(--faux); }
+.c-chip .x { opacity: 0.65; font-size: 0.8rem; }
+
+.empty-hint {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.68rem;
+  color: var(--text-faint);
+  font-style: italic;
+}
+
+/* ═══ NEWSLETTER ═══ */
+.nl-layout {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr;
+  gap: 5rem;
+  align-items: center;
+}
+
+@media (max-width: 900px) { .nl-layout { grid-template-columns: 1fr; gap: 3rem; } }
+
+.nl-points {
+  list-style: none;
+  margin-top: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.nl-point {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  font-size: 0.95rem;
+  font-weight: 300;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.nl-check {
+  flex-shrink: 0;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: var(--vrai-dim);
+  border: 1px solid rgba(52,211,153,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--vrai);
+  font-size: 0.65rem;
+  margin-top: 0.1rem;
+}
+
+.nl-form {
+  background: var(--surface-1);
+  border: 1px solid var(--border-mid);
+  border-radius: 14px;
+  padding: 2.4rem;
+  backdrop-filter: blur(16px);
+}
+
+.nl-form-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.6rem;
+  font-weight: 400;
+  color: var(--text-primary);
+  margin-bottom: 2rem;
+  letter-spacing: -0.01em;
+}
+
+.nl-form-title em { font-style: italic; color: var(--accent-light); }
+
+.form-grp { margin-bottom: 1.4rem; }
+
+.form-lbl {
+  display: block;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-bottom: 0.55rem;
+}
+
+.form-input {
+  width: 100%;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 0.8rem 1rem;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 300;
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.form-input:focus { border-color: var(--accent); }
+.form-input::placeholder { color: var(--text-faint); }
+
+.opts-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.opt-btn {
+  flex: 1;
+  min-width: 80px;
+  padding: 0.6rem 0.6rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.opt-btn:hover { border-color: var(--border-mid); color: var(--text-primary); }
+.opt-btn.on {
+  background: rgba(74,127,212,0.15);
+  border-color: var(--accent);
+  color: var(--accent-light);
+}
+
+.cat-opts { gap: 0.45rem; }
+.cat-opts .opt-btn { flex: 0 0 auto; }
+
+.nl-submit {
+  width: 100%;
+  padding: 1rem;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
+.nl-submit:hover {
+  background: var(--blue-300);
+  box-shadow: 0 8px 32px rgba(74,127,212,0.35);
+}
+
+/* ═══ FOOTER ═══ */
+footer {
+  position: relative;
+  z-index: 5;
+  background: rgba(5,8,15,0.96);
+  border-top: 1px solid var(--border-subtle);
+  padding: 4rem 2rem 2rem;
+}
+
+.footer-inner {
+  max-width: 1260px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr;
+  gap: 4rem;
+  padding-bottom: 3rem;
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: 2rem;
+}
+
+@media (max-width: 768px) { .footer-inner { grid-template-columns: 1fr; gap: 2rem; } }
+
+.footer-brand {
+  font-family: 'DM Serif Display', serif;
+  font-size: 2.8rem;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+  line-height: 0.9;
+  margin-bottom: 0.8rem;
+}
+
+.footer-brand em { font-style: italic; color: var(--accent-light); }
+
+.footer-tagline {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.footer-col-title {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: 1.4rem;
+}
+
+.footer-links {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.footer-links a {
+  font-size: 0.88rem;
+  font-weight: 300;
+  color: var(--text-faint);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.footer-links a:hover { color: var(--text-secondary); }
+
+.footer-bottom {
+  max-width: 1260px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.footer-copy {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  color: var(--text-faint);
+}
+
+.footer-powered {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  color: var(--text-faint);
+}
+
+.footer-powered span { color: var(--accent-light); }
+
+/* ═══ MAP LEGEND ═══ */
+.map-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem 1.6rem;
+  margin-bottom: 1.5rem;
+  padding: 0.9rem 1.2rem;
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+}
+
+.map-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+}
+
+.ml-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.ml-dot.crisis  { background: var(--faux); box-shadow: 0 0 6px var(--faux); }
+.ml-dot.tension { background: var(--partiel); box-shadow: 0 0 6px var(--partiel); }
+.ml-dot.disinfo { background: var(--accent-light); box-shadow: 0 0 6px var(--accent-light); }
+.ml-dot.eco     { background: var(--vrai); box-shadow: 0 0 6px var(--vrai); }
+
+.cp-legend {
+  width: 14px; height: 10px;
+  border-radius: 2px;
+  background: rgba(29,64,128,0.6);
+  border: 1px solid rgba(74,127,212,0.4);
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+/* ═══ HOTSPOTS ═══ */
+.hotspot { cursor: pointer; }
+
+/* Anneaux pulsants */
+.hs-ring {
+  fill: none;
+  stroke-width: 1.5;
+  opacity: 0;
+  animation: hsRingPulse 2.5s ease-out infinite;
+}
+
+.hs-dot {
+  stroke: none;
+}
+
+.crisis-ring  { stroke: var(--faux); }
+.tension-ring { stroke: var(--partiel); }
+.disinfo-ring { stroke: var(--accent-light); }
+.eco-ring     { stroke: var(--vrai); }
+
+.crisis-dot  { fill: var(--faux); }
+.tension-dot { fill: var(--partiel); }
+.disinfo-dot { fill: var(--accent-light); }
+.eco-dot     { fill: var(--vrai); }
+
+/* Délais décalés pour éviter la synchronisation */
+.hotspot:nth-child(2) .hs-ring { animation-delay: 0.4s; }
+.hotspot:nth-child(3) .hs-ring { animation-delay: 0.8s; }
+.hotspot:nth-child(4) .hs-ring { animation-delay: 1.2s; }
+.hotspot:nth-child(5) .hs-ring { animation-delay: 0.2s; }
+.hotspot:nth-child(6) .hs-ring { animation-delay: 0.6s; }
+.hotspot:nth-child(7) .hs-ring { animation-delay: 1.0s; }
+.hotspot:nth-child(8) .hs-ring { animation-delay: 0.3s; }
+.hotspot:nth-child(9) .hs-ring { animation-delay: 0.7s; }
+.hotspot:nth-child(10) .hs-ring { animation-delay: 1.1s; }
+.hotspot:nth-child(11) .hs-ring { animation-delay: 0.5s; }
+
+@keyframes hsRingPulse {
+  0%   { r: 5px;  opacity: 0.8; }
+  70%  { r: 16px; opacity: 0; }
+  100% { r: 16px; opacity: 0; }
+}
+
+/* Tooltip hotspot */
+.hs-tooltip {
+  position: absolute;
+  background: rgba(6,14,32,0.98);
+  border: 1px solid var(--border-mid);
+  border-radius: 10px;
+  padding: 1rem 1.2rem;
+  width: 240px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 30;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 8px 32px rgba(6,12,28,0.8);
+}
+
+.hs-tooltip.vis { opacity: 1; }
+
+.hs-tip-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+}
+
+.hs-tip-badge {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.hs-tip-title {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+.hs-tip-desc {
+  font-size: 0.78rem;
+  font-weight: 300;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin-bottom: 0.6rem;
+}
+
+.hs-tip-urgence {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.hs-tip-urgence span { color: var(--accent-light); }
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.toast {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(120px);
+  background: rgba(9,18,36,0.97);
+  border: 1px solid var(--border-mid);
+  border-left: 3px solid var(--vrai);
+  color: var(--text-primary);
+  padding: 0.85rem 1.8rem;
+  border-radius: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+  z-index: 500;
+  backdrop-filter: blur(20px);
+  box-shadow: 0 12px 40px rgba(6,12,28,0.7);
+}
+
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast.err  { border-left-color: var(--faux); }
+
+.dots-anim::after {
+  content: '';
+  animation: dotA 1.5s infinite;
+}
+
+@keyframes dotA {
+  0%   { content: ''; }
+  33%  { content: '.'; }
+  66%  { content: '..'; }
+  100% { content: '...'; }
+}
+
+::-webkit-scrollbar { width: 7px; }
+::-webkit-scrollbar-track { background: var(--blue-950); }
+::-webkit-scrollbar-thumb { background: var(--blue-700); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--blue-500); }
+</style>
+</head>
+<body>
+
+<!-- FOND GLOBAL -->
+<div class="page-bg"></div>
+
+<!-- FOND NEWS ANIMÉ -->
+<div class="news-bg" id="newsBg"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-brand">
+    <div class="nav-name">Bunk<em>er</em></div>
+    <div class="nav-tagline-sm">Le vrai du faux de l'info</div>
+  </div>
+  <ul class="nav-links">
+    <li><a onclick="goTo('how')">Méthode</a></li>
+    <li><a onclick="goTo('trending')">En direct</a></li>
+    <li><a onclick="goTo('map')">Carte</a></li>
+    <li><a onclick="goTo('newsletter')">Newsletter</a></li>
+  </ul>
+  <button class="nav-cta" onclick="goTo('newsletter')">S'abonner</button>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-live">
+    <span class="live-pip"></span>
+    Vérification IA en temps réel — Propulsé par Claude
+  </div>
+
+  <h1 class="hero-title">Bunker</h1>
+
+  <p class="hero-sub">
+    <span class="sub-line"></span>
+    Le vrai du faux de l'info
+    <span class="sub-line r"></span>
+  </p>
+
+  <div class="search-wrapper">
+    <div class="search-glow-ring"></div>
+    <div class="search-box-wrap">
+      <div class="search-label-bar">
+        <span class="slb-left">Soumettez une affirmation, un lien ou une question</span>
+        <span class="slb-right"><span class="slb-dot"></span> IA active</span>
+      </div>
+      <div class="search-row">
+        <input
+          type="text"
+          class="search-input"
+          id="searchInput"
+          placeholder="Ex : « Les vaccins modifient-ils l'ADN ? »"
+          onkeydown="if(event.key==='Enter') runSearch()"
+        />
+        <button class="search-btn" onclick="runSearch()">
+          Vérifier
+          <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="chips-row">
+    <div class="chip" onclick="quick('Le vaccin COVID modifie-t-il l\'ADN humain ?')">💉 Vaccin & ADN</div>
+    <div class="chip" onclick="quick('2024 est-elle l\'année la plus chaude enregistrée ?')">🌡 Climat record</div>
+    <div class="chip" onclick="quick('L\'homme a-t-il vraiment marché sur la Lune ?')">🌙 Apollo</div>
+    <div class="chip" onclick="quick('L\'IA peut-elle devenir consciente ?')">🤖 IA consciente</div>
+    <div class="chip" onclick="quick('La Terre est-elle plate ?')">🌍 Terre plate</div>
+  </div>
+
+  <div class="result-wrap" id="resultWrap">
+    <div class="result-card" id="resultCard">
+      <div class="verdict-header">
+        <div class="verdict-label" id="verdictLbl">Analyse…</div>
+        <div class="verdict-conf" id="verdictConf"></div>
+        <div class="verdict-sig">
+          <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+          </svg>
+          Bunker × Claude
+        </div>
+      </div>
+      <div class="result-body">
+        <p class="result-text" id="resultText"></p>
+        <div class="sources-row" id="resultSources"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SECTIONS -->
+<div class="section-wrap">
+
+<!-- STATS -->
+<div class="stats-band">
+  <div class="stats-inner">
+    <div class="stat">
+      <div class="stat-num" data-target="2400000">0</div>
+      <div class="stat-lbl">Claims vérifiés</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num" data-target="189">0</div>
+      <div class="stat-lbl">Pays couverts</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num" data-target="94" data-sfx="%">0</div>
+      <div class="stat-lbl">Précision</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num" data-target="12" data-sfx="s">0</div>
+      <div class="stat-lbl">Temps moyen</div>
+    </div>
+  </div>
+</div>
+
+<div class="sep"></div>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <div class="eyebrow">Méthodologie</div>
+  <h2 class="sec-title">Comment Bunker<br><em>démêle</em> l'information</h2>
+  <p class="sec-desc">Une IA propulsée par Claude croise des milliers de sources en quelques secondes pour vous livrer un verdict clair, sourcé et transparent.</p>
+
+  <div class="how-grid">
+    <div class="how-card">
+      <div class="how-num">01</div>
+      <div class="how-icon">
+        <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+        </svg>
+      </div>
+      <h3 class="how-title">Soumettez un contenu</h3>
+      <p class="how-desc">URL d'article, post viral, titre ou question directe. Bunker accepte tout format textuel, en français comme en anglais.</p>
+    </div>
+    <div class="how-card">
+      <div class="how-num">02</div>
+      <div class="how-icon">
+        <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+        </svg>
+      </div>
+      <h3 class="how-title">Analyse multi-sources</h3>
+      <p class="how-desc">Notre IA croise fact-checkers certifiés IFCN, journaux de référence, publications académiques et bases de données officielles mondiales.</p>
+    </div>
+    <div class="how-card">
+      <div class="how-num">03</div>
+      <div class="how-icon">
+        <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+        </svg>
+      </div>
+      <h3 class="how-title">Verdict transparent</h3>
+      <p class="how-desc">Vrai, Faux ou Partiel — avec le niveau de confiance, une explication pédagogique et toutes les sources vérifiables en clair.</p>
+    </div>
+  </div>
+</section>
+
+<div class="sep"></div>
+
+<!-- TRENDING -->
+<section id="trending">
+  <div class="trend-top">
+    <div>
+      <div class="eyebrow">En direct</div>
+      <h2 class="sec-title">Fact-checks <em>du moment</em></h2>
+    </div>
+    <button class="refresh-btn" id="refreshBtn" onclick="refreshTrend()">
+      <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+      </svg>
+      Actualiser
+    </button>
+  </div>
+  <div class="trend-grid" id="trendGrid"></div>
+</section>
+
+<div class="sep"></div>
+
+<!-- MAP -->
+<section id="map" style="padding-bottom:3rem;">
+  <div class="eyebrow">Carte mondiale</div>
+  <h2 class="sec-title">Info sensible,<br>localisée <em>en direct</em></h2>
+  <p class="sec-desc" style="margin-bottom:2.5rem;">Points chauds de l'information mondiale — avril 2026. Cliquez sur un pays pour le suivre, survolez un point rouge pour voir l'alerte active.</p>
+
+  <!-- LÉGENDE HOTSPOTS -->
+  <div class="map-legend">
+    <div class="map-legend-item"><span class="ml-dot crisis"></span> Conflit actif</div>
+    <div class="map-legend-item"><span class="ml-dot tension"></span> Tension géopolitique</div>
+    <div class="map-legend-item"><span class="ml-dot disinfo"></span> Désinformation massive</div>
+    <div class="map-legend-item"><span class="ml-dot eco"></span> Crise économique</div>
+    <div class="map-legend-item"><span class="cp-legend"></span> Cliquer pour sélectionner</div>
+  </div>
+
+  <!-- CARTE PRINCIPALE -->
+  <div class="map-frame" style="margin-bottom:1.5rem;">
+    <div class="map-header">
+      <span class="map-header-label">
+        <span class="live-pip" style="width:6px;height:6px;display:inline-block;border-radius:50%;background:var(--faux);margin-right:0.4rem;animation:pipPulse 1.5s infinite;"></span>
+        Points chauds avril 2026 — Carte interactive
+      </span>
+      <span class="map-count-label" id="mapCountLbl">0 pays sélectionné(s)</span>
+    </div>
+
+    <div style="position:relative; overflow:hidden;">
+      <svg id="worldSvg" viewBox="0 0 1010 666" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;padding:0.8rem;">
+
+        <!-- ═══ PAYS — paths SVG précis projetion Mercator ═══ -->
+        <!-- Amérique du Nord -->
+        <path class="cp" data-n="Canada" d="M120,80 L150,70 L180,65 L220,62 L260,65 L285,72 L300,85 L295,95 L280,100 L260,105 L230,108 L200,112 L170,115 L145,112 L128,105 L118,95 Z"/>
+        <path class="cp" data-n="Alaska" d="M60,70 L80,65 L100,68 L112,78 L105,88 L88,92 L68,88 L55,80 Z"/>
+        <path class="cp" data-n="États-Unis" d="M128,108 L260,108 L282,115 L290,125 L285,145 L275,158 L255,165 L230,168 L200,170 L170,168 L148,162 L132,150 L122,135 L120,120 Z"/>
+        <path class="cp" data-n="Mexique" d="M132,168 L200,165 L218,172 L228,185 L222,200 L210,210 L195,218 L175,220 L158,215 L142,205 L130,192 L128,178 Z"/>
+        <path class="cp" data-n="Guatemala" d="M158,220 L175,218 L185,225 L182,235 L168,238 L156,232 Z"/>
+        <path class="cp" data-n="Cuba" d="M192,195 L215,190 L225,196 L218,205 L195,208 L185,202 Z"/>
+
+        <!-- Amérique du Sud -->
+        <path class="cp" data-n="Colombie" d="M172,240 L200,235 L218,242 L222,258 L215,272 L198,278 L178,272 L168,258 L165,245 Z"/>
+        <path class="cp" data-n="Venezuela" d="M200,235 L228,230 L245,238 L248,252 L235,260 L215,262 L200,255 L198,242 Z"/>
+        <path class="cp" data-n="Pérou" d="M168,278 L198,275 L212,282 L215,302 L208,320 L192,328 L172,320 L158,305 L155,288 L160,280 Z"/>
+        <path class="cp" data-n="Brésil" d="M215,258 L258,248 L290,252 L315,265 L328,285 L332,310 L325,335 L310,352 L288,360 L262,358 L238,348 L218,332 L208,312 L208,288 L212,270 Z"/>
+        <path class="cp" data-n="Bolivie" d="M198,320 L215,315 L232,320 L235,342 L225,355 L205,355 L192,342 L192,328 Z"/>
+        <path class="cp" data-n="Chili" d="M185,335 L202,330 L210,355 L208,385 L200,415 L188,435 L178,430 L175,405 L178,375 L182,352 Z"/>
+        <path class="cp" data-n="Argentine" d="M202,352 L228,348 L242,360 L242,390 L235,415 L222,435 L205,445 L190,438 L185,415 L188,385 L195,362 Z"/>
+
+        <!-- Europe -->
+        <path class="cp" data-n="Islande" d="M368,68 L390,62 L405,68 L400,80 L382,85 L368,78 Z"/>
+        <path class="cp" data-n="Norvège" d="M450,70 L468,62 L488,65 L492,80 L480,92 L465,98 L450,92 L445,80 Z"/>
+        <path class="cp" data-n="Suède" d="M470,80 L488,72 L500,78 L498,98 L488,110 L472,112 L462,102 L462,88 Z"/>
+        <path class="cp" data-n="Finlande" d="M492,72 L512,68 L528,75 L528,95 L518,108 L500,112 L490,102 L488,85 Z"/>
+        <path class="cp" data-n="Danemark" d="M462,102 L475,98 L480,106 L472,115 L462,112 Z"/>
+        <path class="cp" data-n="Royaume-Uni" d="M428,98 L448,90 L460,95 L462,112 L455,125 L440,128 L428,120 L422,108 Z"/>
+        <path class="cp" data-n="Irlande" d="M412,102 L428,98 L430,112 L420,118 L410,112 Z"/>
+        <path class="cp" data-n="France" d="M440,128 L462,120 L478,122 L485,135 L480,150 L465,158 L448,155 L438,142 Z"/>
+        <path class="cp" data-n="Espagne" d="M418,148 L445,142 L462,145 L468,158 L460,172 L442,178 L420,172 L410,158 L412,148 Z"/>
+        <path class="cp" data-n="Portugal" d="M408,148 L420,145 L422,162 L412,168 L405,158 Z"/>
+        <path class="cp" data-n="Belgique" d="M452,118 L465,115 L470,125 L458,130 L448,128 Z"/>
+        <path class="cp" data-n="Pays-Bas" d="M456,108 L470,106 L472,118 L462,120 L455,115 Z"/>
+        <path class="cp" data-n="Allemagne" d="M462,112 L500,108 L512,118 L510,135 L498,142 L478,140 L462,132 L458,120 Z"/>
+        <path class="cp" data-n="Pologne" d="M500,108 L535,105 L545,115 L542,132 L525,138 L508,135 L500,122 Z"/>
+        <path class="cp" data-n="Autriche" d="M480,138 L510,135 L518,142 L515,152 L498,155 L480,150 Z"/>
+        <path class="cp" data-n="Suisse" d="M462,135 L480,132 L482,145 L468,148 L460,142 Z"/>
+        <path class="cp" data-n="Italie" d="M468,148 L490,142 L502,148 L505,162 L498,178 L488,192 L478,200 L468,195 L460,180 L458,162 Z"/>
+        <path class="cp" data-n="République tchèque" d="M490,122 L510,118 L515,130 L502,135 L488,132 Z"/>
+        <path class="cp" data-n="Hongrie" d="M498,138 L518,135 L525,145 L518,155 L500,158 L490,150 Z"/>
+        <path class="cp" data-n="Roumanie" d="M518,132 L548,128 L558,140 L552,158 L535,162 L518,155 L512,142 Z"/>
+        <path class="cp" data-n="Bulgarie" d="M522,158 L548,155 L555,165 L542,175 L522,172 L515,165 Z"/>
+        <path class="cp" data-n="Serbie" d="M498,155 L518,152 L522,165 L512,175 L498,170 L492,162 Z"/>
+        <path class="cp" data-n="Grèce" d="M498,172 L520,168 L528,178 L522,192 L505,198 L495,188 L492,178 Z"/>
+        <path class="cp" data-n="Ukraine" d="M530,118 L578,112 L598,122 L595,142 L578,152 L548,155 L530,145 L522,132 Z"/>
+        <path class="cp" data-n="Biélorussie" d="M525,108 L558,105 L568,115 L562,128 L530,130 L520,120 Z"/>
+        <path class="cp" data-n="Moldavie" d="M552,145 L562,142 L565,152 L558,158 L548,155 Z"/>
+        <path class="cp" data-n="Russie" d="M492,68 L660,50 L750,55 L820,65 L840,85 L820,108 L780,118 L720,125 L660,128 L598,122 L558,112 L520,108 L500,95 L488,78 Z"/>
+        <path class="cp" data-n="Turquie" d="M530,162 L578,155 L612,158 L628,168 L622,182 L600,190 L568,188 L540,182 L525,172 Z"/>
+
+        <!-- Moyen-Orient -->
+        <path class="cp" data-n="Syrie" d="M572,175 L600,170 L612,178 L608,192 L588,198 L572,192 Z"/>
+        <path class="cp" data-n="Irak" d="M592,182 L622,178 L635,188 L632,208 L618,220 L598,222 L582,212 L580,195 Z"/>
+        <path class="cp" data-n="Iran" d="M622,168 L665,162 L688,170 L695,188 L688,210 L668,225 L640,228 L618,218 L612,200 L615,182 Z"/>
+        <path class="cp" data-n="Israël/Palestine" d="M558,192 L572,188 L578,200 L568,208 L555,205 Z"/>
+        <path class="cp" data-n="Liban" d="M562,185 L575,182 L578,192 L568,196 L560,192 Z"/>
+        <path class="cp" data-n="Jordanie" d="M568,200 L590,195 L598,208 L590,220 L568,218 L558,208 Z"/>
+        <path class="cp" data-n="Arabie Saoudite" d="M575,210 L618,205 L648,215 L655,235 L648,258 L628,272 L600,275 L572,262 L558,242 L558,222 Z"/>
+        <path class="cp" data-n="Yémen" d="M578,268 L618,262 L642,268 L645,282 L618,292 L585,288 L572,278 Z"/>
+        <path class="cp" data-n="Émirats arabes unis" d="M640,242 L662,238 L668,248 L658,258 L640,255 Z"/>
+        <path class="cp" data-n="Qatar" d="M632,245 L640,242 L642,250 L634,252 Z"/>
+        <path class="cp" data-n="Koweït" d="M612,218 L625,215 L628,225 L618,228 Z"/>
+        <path class="cp" data-n="Afghanistan" d="M682,168 L718,162 L732,172 L728,195 L710,208 L688,210 L675,198 L672,180 Z"/>
+        <path class="cp" data-n="Pakistan" d="M682,200 L718,192 L748,198 L752,220 L738,240 L712,248 L688,242 L675,225 L678,208 Z"/>
+
+        <!-- Asie centrale -->
+        <path class="cp" data-n="Kazakhstan" d="M620,118 L695,112 L728,122 L732,148 L718,162 L680,165 L645,162 L618,150 L612,132 Z"/>
+        <path class="cp" data-n="Ouzbékistan" d="M658,158 L690,152 L698,162 L692,175 L668,178 L655,170 Z"/>
+        <path class="cp" data-n="Turkménistan" d="M650,162 L688,158 L698,170 L692,185 L668,188 L648,178 Z"/>
+
+        <!-- Asie du Sud -->
+        <path class="cp" data-n="Inde" d="M712,208 L752,200 L778,212 L790,235 L792,262 L780,285 L758,302 L732,308 L708,298 L692,278 L688,252 L692,228 L702,215 Z"/>
+        <path class="cp" data-n="Sri Lanka" d="M762,298 L775,295 L778,308 L768,312 L758,305 Z"/>
+        <path class="cp" data-n="Bangladesh" d="M775,225 L792,220 L798,232 L788,242 L775,238 Z"/>
+        <path class="cp" data-n="Népal" d="M748,210 L778,205 L782,215 L752,220 Z"/>
+
+        <!-- Asie de l'Est -->
+        <path class="cp" data-n="Chine" d="M730,125 L818,118 L858,128 L875,148 L870,175 L852,198 L822,215 L792,218 L762,210 L738,195 L720,175 L718,150 L722,132 Z"/>
+        <path class="cp" data-n="Mongolie" d="M728,115 L810,108 L828,118 L822,135 L798,142 L758,145 L730,138 Z"/>
+        <path class="cp" data-n="Corée du Nord" d="M840,148 L862,142 L872,152 L868,165 L850,170 L838,162 Z"/>
+        <path class="cp" data-n="Corée du Sud" d="M850,165 L872,160 L878,170 L872,182 L852,182 Z"/>
+        <path class="cp" data-n="Japon" d="M875,148 L898,138 L912,148 L910,165 L895,175 L878,168 Z"/>
+        <path class="cp" data-n="Taiwan" d="M862,185 L872,182 L875,192 L865,196 Z"/>
+        <path class="cp" data-n="Vietnam" d="M818,215 L842,208 L852,222 L845,250 L832,262 L818,255 L812,238 Z"/>
+        <path class="cp" data-n="Thaïlande" d="M798,220 L820,215 L828,228 L822,248 L808,252 L795,242 L792,228 Z"/>
+        <path class="cp" data-n="Myanmar" d="M792,200 L818,195 L828,208 L825,228 L808,232 L792,225 L785,212 Z"/>
+        <path class="cp" data-n="Cambodge" d="M818,248 L840,245 L845,258 L830,265 L815,260 Z"/>
+        <path class="cp" data-n="Malaisie" d="M808,262 L842,258 L850,270 L838,280 L808,278 L800,270 Z"/>
+        <path class="cp" data-n="Indonésie" d="M818,285 L885,275 L915,282 L920,298 L895,308 L855,312 L820,305 L808,295 Z"/>
+        <path class="cp" data-n="Philippines" d="M862,245 L882,238 L892,248 L885,268 L868,272 L855,260 Z"/>
+
+        <!-- Afrique -->
+        <path class="cp" data-n="Maroc" d="M415,175 L445,172 L452,185 L445,202 L425,208 L412,198 L408,185 Z"/>
+        <path class="cp" data-n="Algérie" d="M438,178 L490,172 L502,182 L498,202 L478,215 L450,215 L432,205 L428,190 Z"/>
+        <path class="cp" data-n="Tunisie" d="M478,172 L492,168 L498,178 L495,192 L480,195 L472,185 Z"/>
+        <path class="cp" data-n="Libye" d="M492,178 L540,172 L558,182 L555,208 L530,222 L498,218 L488,202 Z"/>
+        <path class="cp" data-n="Égypte" d="M545,182 L582,178 L592,190 L588,218 L568,228 L545,225 L535,208 L535,192 Z"/>
+        <path class="cp" data-n="Soudan" d="M558,222 L600,218 L618,228 L618,262 L598,275 L568,275 L548,262 L545,238 Z"/>
+        <path class="cp" data-n="Éthiopie" d="M588,268 L622,262 L640,272 L638,295 L618,308 L595,305 L578,292 L578,275 Z"/>
+        <path class="cp" data-n="Somalie" d="M618,278 L650,268 L665,278 L660,302 L638,318 L618,308 Z"/>
+        <path class="cp" data-n="Mali" d="M422,228 L475,222 L490,232 L488,262 L465,272 L435,270 L415,258 L415,238 Z"/>
+        <path class="cp" data-n="Niger" d="M475,222 L528,218 L542,228 L538,258 L510,268 L485,265 L470,250 L468,232 Z"/>
+        <path class="cp" data-n="Tchad" d="M528,222 L565,218 L578,230 L575,268 L550,278 L528,272 L518,258 L515,232 Z"/>
+        <path class="cp" data-n="Nigeria" d="M470,265 L512,260 L528,270 L525,298 L505,312 L478,310 L460,298 L458,278 Z"/>
+        <path class="cp" data-n="RD Congo" d="M505,295 L545,288 L572,298 L568,335 L548,352 L518,355 L495,342 L488,318 L490,302 Z"/>
+        <path class="cp" data-n="Angola" d="M488,345 L522,340 L538,352 L535,382 L515,395 L490,390 L478,372 L478,355 Z"/>
+        <path class="cp" data-n="Mozambique" d="M548,345 L575,340 L588,355 L582,388 L562,402 L542,395 L535,372 L535,355 Z"/>
+        <path class="cp" data-n="Zimbabwe" d="M532,355 L558,350 L568,362 L562,380 L540,385 L528,372 Z"/>
+        <path class="cp" data-n="Afrique du Sud" d="M498,388 L545,382 L568,392 L572,415 L555,430 L522,438 L495,428 L480,412 L480,398 Z"/>
+        <path class="cp" data-n="Kenya" d="M570,290 L605,282 L618,295 L612,322 L592,332 L568,325 L558,308 Z"/>
+        <path class="cp" data-n="Tanzanie" d="M558,322 L595,315 L612,328 L608,358 L582,368 L555,360 L545,342 Z"/>
+        <path class="cp" data-n="Madagascar" d="M595,358 L618,350 L628,365 L622,395 L602,408 L585,398 L582,375 Z"/>
+
+        <!-- Océanie -->
+        <path class="cp" data-n="Australie" d="M820,342 L895,330 L935,345 L948,372 L942,408 L915,428 L875,435 L842,425 L818,405 L808,378 L812,355 Z"/>
+        <path class="cp" data-n="Nouvelle-Zélande" d="M938,418 L958,408 L968,422 L960,440 L942,445 L932,432 Z"/>
+        <path class="cp" data-n="Papouasie" d="M888,295 L930,285 L945,298 L935,318 L905,325 L885,315 Z"/>
+
+        <!-- ═══ HOTSPOTS — Points d'alerte géolocalisés ═══ -->
+        <!-- Coordonnées basées sur le viewBox 1010x666 -->
+
+        <!-- 🔴 Moyen-Orient / Détroit d'Hormuz — Crise énergétique majeure -->
+        <g class="hotspot" data-type="crisis" data-title="Crise du Détroit d'Hormuz" data-desc="Fermeture partielle du détroit. +19% sur les prix de l'énergie mondiale. Menace pour 20% du commerce pétrolier." data-urgence="critique">
+          <circle cx="650" cy="245" r="10" class="hs-ring crisis-ring"/>
+          <circle cx="650" cy="245" r="5" class="hs-dot crisis-dot"/>
+        </g>
+
+        <!-- 🔴 Gaza / Israël — Conflit actif -->
+        <g class="hotspot" data-type="crisis" data-title="Gaza — Conflit israélo-palestinien" data-desc="Opérations militaires en cours. Crise humanitaire sévère. Désinformation massive des deux côtés du conflit." data-urgence="critique">
+          <circle cx="563" cy="200" r="9" class="hs-ring crisis-ring"/>
+          <circle cx="563" cy="200" r="4" class="hs-dot crisis-dot"/>
+        </g>
+
+        <!-- 🔴 Ukraine — Conflit russo-ukrainien -->
+        <g class="hotspot" data-type="crisis" data-title="Ukraine — Guerre russo-ukrainienne" data-desc="Conflit en cours. Frappes de drones signalées. Négociations de paix au point mort selon Reuters." data-urgence="critique">
+          <circle cx="560" cy="132" r="9" class="hs-ring crisis-ring"/>
+          <circle cx="560" cy="132" r="4" class="hs-dot crisis-dot"/>
+        </g>
+
+        <!-- 🟠 Mer de Chine — Tensions Taiwan -->
+        <g class="hotspot" data-type="tension" data-title="Tensions en mer de Chine" data-desc="Exercices militaires chinois autour de Taiwan. Sommet Trump-Xi attendu. Découplage technologique en cours." data-urgence="élevée">
+          <circle cx="878" cy="192" r="9" class="hs-ring tension-ring"/>
+          <circle cx="878" cy="192" r="4" class="hs-dot tension-dot"/>
+        </g>
+
+        <!-- 🟠 Sahel — Insécurité et désinformation -->
+        <g class="hotspot" data-type="disinfo" data-title="Sahel — Désinformation & instabilité" data-desc="Mali, Burkina Faso, Niger : progression jihadiste. Campagnes de désinformation pro-russes documentées." data-urgence="élevée">
+          <circle cx="462" cy="250" r="8" class="hs-ring disinfo-ring"/>
+          <circle cx="462" cy="250" r="4" class="hs-dot disinfo-dot"/>
+        </g>
+
+        <!-- 🟠 Corée du Nord — Provocations nucléaires -->
+        <g class="hotspot" data-type="tension" data-title="Corée du Nord — Provocations balistiques" data-desc="Tirs de missiles balistiques signalés. Capacités hypersoniques en développement selon Defense News." data-urgence="élevée">
+          <circle cx="854" cy="157" r="8" class="hs-ring tension-ring"/>
+          <circle cx="854" cy="157" r="4" class="hs-dot tension-dot"/>
+        </g>
+
+        <!-- 🟡 Venezuela — Instabilité politique -->
+        <g class="hotspot" data-type="tension" data-title="Venezuela — Crise politique" data-desc="Instabilité persistante. Menace d'intervention américaine. Flux migratoires vers la Colombie et le Brésil." data-urgence="modérée">
+          <circle cx="222" cy="245" r="7" class="hs-ring tension-ring"/>
+          <circle cx="222" cy="245" r="3.5" class="hs-dot tension-dot"/>
+        </g>
+
+        <!-- 🔵 USA / Chine — Guerre commerciale -->
+        <g class="hotspot" data-type="eco" data-title="USA — Guerre commerciale & tarifs" data-desc="Tarifs douaniers record. Découplage des chaînes d'approvisionnement. Impact sur la croissance mondiale : -0.3%." data-urgence="modérée">
+          <circle cx="195" cy="148" r="8" class="hs-ring eco-ring"/>
+          <circle cx="195" cy="148" r="4" class="hs-dot eco-dot"/>
+        </g>
+
+        <!-- 🟡 Soudan — Conflit oublié -->
+        <g class="hotspot" data-type="crisis" data-title="Soudan — Conflit SAF/RSF" data-desc="Conflit civil entre SAF et RSF. Crise humanitaire majeure, la plus meurtrière en Afrique. Peu médiatisé." data-urgence="critique">
+          <circle cx="582" cy="245" r="8" class="hs-ring crisis-ring"/>
+          <circle cx="582" cy="245" r="4" class="hs-dot crisis-dot"/>
+        </g>
+
+        <!-- 🔵 Europe — Crise de désinformation IA -->
+        <g class="hotspot" data-type="disinfo" data-title="Europe — Désinformation IA électorale" data-desc="Deepfakes et campagnes IA identifiées dans plusieurs pays. Elections 2026 sous surveillance de l'UE." data-urgence="modérée">
+          <circle cx="472" cy="132" r="8" class="hs-ring disinfo-ring"/>
+          <circle cx="472" cy="132" r="4" class="hs-dot disinfo-dot"/>
+        </g>
+
+        <!-- 🔵 Inde/Pakistan — Tensions frontalières -->
+        <g class="hotspot" data-type="tension" data-title="Inde — Tensions régionales" data-desc="Tensions frontalières Inde-Pakistan. Élections indiennes sous pression. Croissance à 6.5% malgré les risques." data-urgence="modérée">
+          <circle cx="730" cy="235" r="7" class="hs-ring tension-ring"/>
+          <circle cx="730" cy="235" r="3.5" class="hs-dot tension-dot"/>
+        </g>
+
+      </svg>
+
+      <!-- Tooltip hotspot -->
+      <div class="hs-tooltip" id="hsTip">
+        <div class="hs-tip-head">
+          <span class="hs-tip-badge" id="hsTipBadge"></span>
+          <span class="hs-tip-title" id="hsTipTitle"></span>
+        </div>
+        <p class="hs-tip-desc" id="hsTipDesc"></p>
+        <div class="hs-tip-urgence">Niveau : <span id="hsTipUrgence"></span></div>
+      </div>
+
+      <!-- Tooltip pays -->
+      <div class="map-tip" id="mapTip"></div>
+    </div>
+  </div>
+
+  <!-- SÉLECTION PAYS -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+    <div class="chips-box">
+      <div class="chips-head">
+        <span class="chips-head-label">Pays sélectionnés <span id="cCount" style="color:var(--text-faint)">(0)</span></span>
+        <span class="clear-btn" id="clearBtn" onclick="clearAll()">Tout effacer ✕</span>
+      </div>
+      <div class="chips-body" id="cChips">
+        <span class="empty-hint">Cliquez sur la carte →</span>
+      </div>
+    </div>
+    <div class="chips-box">
+      <div class="chips-head">
+        <span class="chips-head-label">Points chauds actifs</span>
+        <span style="color:var(--faux);font-family:'DM Mono',monospace;font-size:0.6rem;">11 alertes</span>
+      </div>
+      <div class="chips-body" style="flex-direction:column;gap:0.4rem;">
+        <div style="font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--faux);">● 3 conflits actifs</div>
+        <div style="font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--partiel);">● 4 tensions géopolitiques</div>
+        <div style="font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--accent-light);">● 2 crises désinformation</div>
+        <div style="font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--vrai);">● 2 crises économiques</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="sep"></div>
+
+<!-- NEWSLETTER -->
+<section id="newsletter">
+  <div class="nl-layout">
+    <div>
+      <div class="eyebrow">Newsletter</div>
+      <h2 class="sec-title">L'info <em>vérifiée</em>,<br>livrée chez vous</h2>
+      <p class="sec-desc">Une sélection calme et fiable d'informations pré-vérifiées. Filtrage personnalisé, zéro bruit, zéro clickbait.</p>
+      <ul class="nl-points">
+        <li class="nl-point"><span class="nl-check">✓</span> Fact-checkers certifiés IFCN + analyse IA Bunker</li>
+        <li class="nl-point"><span class="nl-check">✓</span> Filtrage par pays, catégorie et niveau d'urgence</li>
+        <li class="nl-point"><span class="nl-check">✓</span> Zéro désinformation, zéro publicité cachée</li>
+        <li class="nl-point"><span class="nl-check">✓</span> Désinscription immédiate, données protégées</li>
+      </ul>
+    </div>
+    <div class="nl-form">
+      <div class="nl-form-title">S'abonner à <em>Bunker</em></div>
+      <div class="form-grp">
+        <label class="form-lbl">Adresse email</label>
+        <input type="email" class="form-input" id="nlEmail" placeholder="vous@exemple.com"/>
+      </div>
+      <div class="form-grp">
+        <label class="form-lbl">Fréquence</label>
+        <div class="opts-row">
+          <button class="opt-btn" onclick="setFreq(this)" data-v="quotidien">Quotidien</button>
+          <button class="opt-btn on" onclick="setFreq(this)" data-v="hebdo">Hebdo</button>
+          <button class="opt-btn" onclick="setFreq(this)" data-v="mensuel">Mensuel</button>
+        </div>
+      </div>
+      <div class="form-grp">
+        <label class="form-lbl">Thèmes</label>
+        <div class="opts-row cat-opts" id="catOpts">
+          <button class="opt-btn on" onclick="tog(this)">Politique</button>
+          <button class="opt-btn" onclick="tog(this)">Santé</button>
+          <button class="opt-btn on" onclick="tog(this)">Techno</button>
+          <button class="opt-btn" onclick="tog(this)">Climat</button>
+          <button class="opt-btn" onclick="tog(this)">Économie</button>
+          <button class="opt-btn" onclick="tog(this)">Science</button>
+          <button class="opt-btn" onclick="tog(this)">Géopolitique</button>
+        </div>
+      </div>
+      <div class="form-grp">
+        <label class="form-lbl">Pays suivis <span style="color:var(--text-faint)" id="nlCLabel">(aucun — voir carte)</span></label>
+      </div>
+      <button class="nl-submit" onclick="subscribe()">
+        S'abonner gratuitement
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M12 5l7 7-7 7"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div>
+      <div class="footer-brand">Bunk<em>er</em></div>
+      <div class="footer-tagline">Le vrai du faux de l'info</div>
+    </div>
+    <div>
+      <div class="footer-col-title">Navigation</div>
+      <ul class="footer-links">
+        <li><a href="#">Méthode & sources</a></li>
+        <li><a href="#">Fact-checks récents</a></li>
+        <li><a href="#">Carte mondiale</a></li>
+        <li><a href="#">Newsletter</a></li>
+        <li><a href="#">API Bunker</a></li>
+      </ul>
+    </div>
+    <div>
+      <div class="footer-col-title">À propos</div>
+      <ul class="footer-links">
+        <li><a href="#">Notre équipe</a></li>
+        <li><a href="#">Partenaires</a></li>
+        <li><a href="#">Presse</a></li>
+        <li><a href="#">Confidentialité</a></li>
+        <li><a href="#">Contact</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span class="footer-copy">© 2025 Bunker — Tous droits réservés</span>
+    <span class="footer-powered">Propulsé par <span>Claude AI</span> × Anthropic</span>
+  </div>
+</footer>
+
+</div><!-- /section-wrap -->
+
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══ NEWS BACKGROUND ═══
+const newsData = [
+  { h: "L'IA générative va-t-elle remplacer les journalistes d'ici 2030 ?", s: "Le Monde", c: "FR", t: "Techno", v: "partial" },
+  { h: "Les Ukrainiens ont-ils réellement repris Marioupol cette semaine ?", s: "Reuters", c: "UA", t: "Géopolitique", v: "false" },
+  { h: "Le nouveau variant est-il résistant à tous les vaccins existants ?", s: "Le Figaro", c: "FR", t: "Santé", v: "false" },
+  { h: "La Lune s'éloigne-t-elle vraiment de la Terre de 3,8 cm par an ?", s: "NASA", c: "US", t: "Science", v: "true" },
+  { h: "Elon Musk a-t-il racheté la BBC pour 44 milliards de dollars ?", s: "BBC News", c: "UK", t: "Business", v: "false" },
+  { h: "La Chine a-t-elle lancé un satellite de communication quantique ?", s: "SCMP", c: "CN", t: "Science", v: "true" },
+  { h: "Les populations d'abeilles ont-elles chuté de 80 % en Europe ?", s: "Nature", c: "EU", t: "Climat", v: "partial" },
+  { h: "L'euro sera-t-il remplacé par une monnaie numérique centrale en 2026 ?", s: "Les Échos", c: "FR", t: "Économie", v: "partial" },
+  { h: "Une IA peut-elle véritablement prédire les tremblements de terre ?", s: "Science Mag", c: "US", t: "Science", v: "false" },
+  { h: "Trump a-t-il signé un accord de paix officiel avec l'Iran ?", s: "Washington Post", c: "US", t: "Politique", v: "false" },
+  { h: "Le niveau des océans monte-t-il réellement de 4 mm par an ?", s: "NOAA", c: "US", t: "Climat", v: "true" },
+  { h: "L'Inde est-elle officiellement devenue le pays le plus peuplé en 2023 ?", s: "ONU", c: "IN", t: "Démographie", v: "true" },
+  { h: "Meta a-t-elle officiellement abandonné le projet métavers en 2026 ?", s: "The Verge", c: "US", t: "Techno", v: "partial" },
+  { h: "Le chômage en France est-il passé sous la barre des 7 % ?", s: "INSEE", c: "FR", t: "Économie", v: "true" },
+  { h: "Une nouvelle pandémie grippale aviaire menace-t-elle l'Asie du Sud-Est ?", s: "OMS", c: "CN", t: "Santé", v: "partial" },
+  { h: "Des ingénieurs de Google ont-ils déclaré les LLMs conscients en 2026 ?", s: "MIT Review", c: "US", t: "IA", v: "false" },
+  { h: "L'Allemagne a-t-elle définitivement fermé sa dernière centrale nucléaire ?", s: "Der Spiegel", c: "DE", t: "Énergie", v: "true" },
+  { h: "Des drones ukrainiens ont-ils frappé des infrastructures moscovites cette nuit ?", s: "AFP", c: "RU", t: "Géopolitique", v: "unknown" },
+  { h: "Le Brésil a-t-il atteint zéro déforestation amazonienne cette année ?", s: "Globo", c: "BR", t: "Climat", v: "false" },
+  { h: "Apple a-t-elle officiellement lancé un iPhone pliable à 2 500 euros ?", s: "Bloomberg", c: "US", t: "Techno", v: "false" },
+  { h: "La Corée du Nord dispose-t-elle d'armes hypersoniques opérationnelles ?", s: "Defense News", c: "KR", t: "Défense", v: "partial" },
+  { h: "Les Jeux Olympiques de 2028 ont-ils été déplacés de Los Angeles ?", s: "CIO", c: "AU", t: "Sport", v: "false" },
+  { h: "L'hydrogène vert est-il encore trois fois plus coûteux que le gaz naturel ?", s: "Financial Times", c: "UK", t: "Énergie", v: "true" },
+  { h: "Un astéroïde de grande taille est-il sur une trajectoire d'impact en 2029 ?", s: "ESA", c: "EU", t: "Science", v: "false" },
+  { h: "La France possède-t-elle le taux d'imposition le plus élevé de l'Union européenne ?", s: "Eurostat", c: "FR", t: "Économie", v: "true" },
+  { h: "TikTok sera-t-il interdit dans l'ensemble des pays européens avant 2027 ?", s: "Politico EU", c: "EU", t: "Techno", v: "partial" },
+  { h: "Les thérapies ARNm permettront-elles de guérir tous les cancers d'ici 2030 ?", s: "The Lancet", c: "UK", t: "Santé", v: "partial" },
+  { h: "Les voitures électriques ont-elles un bilan carbone pire que les thermiques ?", s: "ADEME", c: "FR", t: "Climat", v: "false" },
+  { h: "Le Bitcoin dépassera-t-il le seuil des 200 000 dollars avant la fin 2027 ?", s: "CoinDesk", c: "US", t: "Crypto", v: "unknown" },
+  { h: "L'Antarctique a-t-il perdu 30 % de sa banquise au cours de cette saison ?", s: "NSIDC", c: "US", t: "Climat", v: "false" },
+];
+
+const vLabels = { true: "✓ Vrai", false: "✕ Faux", partial: "~ Partiel", unknown: "? En cours" };
+
+function buildCards(start, n) {
+  return Array.from({ length: n }, (_, i) => {
+    const d = newsData[(start + i) % newsData.length];
+    return `<div class="nc" data-v="${d.v}">
+      <div class="nc-top"><span class="nc-src">${d.s}</span><span class="nc-v">${vLabels[d.v]}</span></div>
+      <div class="nc-hl">${d.h}</div>
+      <div class="nc-bot">${d.c} · ${d.t} · Vrai ou faux ?</div>
+    </div>`;
+  }).join('');
+}
+
+function initBg() {
+  const bg = document.getElementById('newsBg');
+  const offs = [0, 6, 12, 18, 24];
+  bg.innerHTML = [1,2,3,4,5].map(r => {
+    const cards = buildCards(offs[r-1], 12);
+    return `<div class="news-track r${r}">${cards}${cards}</div>`;
+  }).join('');
+}
+
+// ═══ AI FACT-CHECK — via /api/check (backend Vercel sécurisé) ═══
+async function aiCheck(query) {
+  try {
+    const res = await fetch("/api/check", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query, type: "factcheck" })
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch {
+    return {
+      verdict: "partial", label: "~ Indéterminé", confidence: "N/A",
+      explanation: "L'analyse n'a pas pu être effectuée — connexion instable ou information trop récente. Consultez directement les sources officielles.",
+      sources: ["Connexion indisponible"]
+    };
+  }
+}
+
+async function runSearch() {
+  const q = document.getElementById('searchInput').value.trim();
+  if (!q) { showToast("Veuillez entrer une question ou un lien", true); return; }
+
+  const wrap  = document.getElementById('resultWrap');
+  const card  = document.getElementById('resultCard');
+  const lbl   = document.getElementById('verdictLbl');
+  const conf  = document.getElementById('verdictConf');
+  const txt   = document.getElementById('resultText');
+  const srcs  = document.getElementById('resultSources');
+
+  wrap.classList.add('show');
+  lbl.className  = 'verdict-label loading';
+  lbl.textContent = '◉ Analyse en cours';
+  conf.textContent = '';
+  txt.innerHTML = '<span class="dots-anim">Interrogation des sources</span>';
+  srcs.innerHTML = '';
+  setTimeout(() => wrap.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
+
+  const r = await aiCheck(q);
+  if (!r) { wrap.classList.remove('show'); return; }
+
+  lbl.className   = `verdict-label ${r.verdict}`;
+  lbl.textContent = r.label;
+  conf.textContent = r.confidence;
+  txt.textContent = r.explanation;
+  srcs.innerHTML  = `<span class="src-lbl">Sources :</span>${r.sources.map(s => `<span class="src-tag">${s}</span>`).join('')}`;
+}
+
+function quick(q) {
+  document.getElementById('searchInput').value = q;
+  runSearch();
+}
+
+// ═══ TRENDING ═══
+const defaultTrend = [
+  { t: "Santé", v: "false", h: "« Les médecins cachent le remède contre le cancer »", s: "Aucun remède universel n'existe. Les traitements sont propres à chaque type de cancer, publics et en constante évolution.", time: "Il y a 2h", c: "🌍 Monde" },
+  { t: "Politique", v: "partial", h: "« Le chômage a baissé de 40 % en 3 ans »", s: "L'INSEE confirme une baisse de 12 %, non de 40 %. La communication gouvernementale déforme les chiffres officiels.", time: "Il y a 4h", c: "🇫🇷 France" },
+  { t: "Technologie", v: "false", h: "« ChatGPT accède à vos caméras à distance »", s: "Information fausse. Les modèles de langage n'ont aucun accès au matériel sans autorisation système explicite.", time: "Il y a 6h", c: "🌍 Monde" },
+  { t: "Climat", v: "true", h: "« 2025 est l'année la plus chaude jamais enregistrée »", s: "Confirmé par la NASA, la NOAA et Copernicus Climate. +1,6 °C par rapport à l'ère préindustrielle.", time: "Il y a 1j", c: "🌍 Monde" },
+  { t: "Économie", v: "partial", h: "« L'euro s'effondrera d'ici 2027 »", s: "Scénario évoqué par une minorité d'économistes, non soutenu par la BCE. Les fondamentaux de la zone euro restent solides.", time: "Il y a 1j", c: "🇪🇺 UE" },
+  { t: "Science", v: "true", h: "« De l'eau liquide confirmée sous la surface de Mars »", s: "Validé par l'ESA grâce aux données radar de Mars Express. Première confirmation scientifique directe.", time: "Il y a 2j", c: "🌌 Espace" },
+];
+
+let trendData = [...defaultTrend];
+
+function renderTrend() {
+  const bl = { true: "✓ Vrai", false: "✕ Faux", partial: "~ Partiel" };
+  document.getElementById('trendGrid').innerHTML = trendData.map(d => `
+    <div class="trend-card" data-v="${d.v}">
+      <div class="trend-meta">
+        <span class="trend-topic">${d.t}</span>
+        <span class="trend-badge ${d.v}">${bl[d.v] || '? En cours'}</span>
+      </div>
+      <h3 class="trend-hl">${d.h}</h3>
+      <p class="trend-sub">${d.s}</p>
+      <div class="trend-footer"><span>${d.c}</span><span>${d.time}</span></div>
+    </div>
+  `).join('');
+}
+
+async function refreshTrend() {
+  const btn = document.getElementById('refreshBtn');
+  btn.classList.add('spin');
+  try {
+    const res = await fetch("/api/check", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query: "trending", type: "trending" })
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const items = await res.json();
+    if (Array.isArray(items) && items.length) { trendData = items; renderTrend(); showToast("Fact-checks actualisés"); }
+  } catch { showToast("Actualisation indisponible", true); }
+  finally { btn.classList.remove('spin'); }
+}
+
+// ═══ MAP ═══
+let sel = new Set();
+
+function initMap() {
+  const mapTip = document.getElementById('mapTip');
+  const hsTip  = document.getElementById('hsTip');
+  const frame  = document.querySelector('.map-frame');
+
+  // — Pays cliquables —
+  document.querySelectorAll('.cp').forEach(p => {
+    const n = p.dataset.n;
+    p.addEventListener('click', () => {
+      sel.has(n) ? sel.delete(n) : sel.add(n);
+      p.classList.toggle('on');
+      updateMapUI();
+    });
+    p.addEventListener('mousemove', e => {
+      const r = frame.getBoundingClientRect();
+      mapTip.textContent = n;
+      mapTip.style.left = (e.clientX - r.left + 14) + 'px';
+      mapTip.style.top  = (e.clientY - r.top  - 32) + 'px';
+      mapTip.classList.add('vis');
+      hsTip.classList.remove('vis');
+    });
+    p.addEventListener('mouseleave', () => mapTip.classList.remove('vis'));
+  });
+
+  // — Hotspots —
+  const typeColors = {
+    crisis:  'var(--faux)',
+    tension: 'var(--partiel)',
+    disinfo: 'var(--accent-light)',
+    eco:     'var(--vrai)'
+  };
+
+  document.querySelectorAll('.hotspot').forEach(hs => {
+    const type    = hs.dataset.type;
+    const title   = hs.dataset.title;
+    const desc    = hs.dataset.desc;
+    const urgence = hs.dataset.urgence;
+
+    hs.addEventListener('mouseenter', e => {
+      const r = frame.getBoundingClientRect();
+      const dot = hs.querySelector('.hs-dot');
+      const cx  = parseFloat(dot.getAttribute('cx'));
+      const cy  = parseFloat(dot.getAttribute('cy'));
+
+      // Convertir coordonnées SVG → pixels écran
+      const svg = document.getElementById('worldSvg');
+      const svgRect = svg.getBoundingClientRect();
+      const vb = svg.viewBox.baseVal;
+      const scaleX = svgRect.width / vb.width;
+      const scaleY = svgRect.height / vb.height;
+
+      let px = (cx * scaleX) + svgRect.left - r.left;
+      let py = (cy * scaleY) + svgRect.top  - r.top;
+
+      // Empêcher le tooltip de déborder
+      if (px + 260 > r.width) px = px - 256;
+      if (py + 120 > r.height) py = py - 110;
+
+      hsTip.style.left = px + 'px';
+      hsTip.style.top  = (py - 10) + 'px';
+
+      document.getElementById('hsTipBadge').style.background = typeColors[type] || '#fff';
+      document.getElementById('hsTipTitle').textContent   = title;
+      document.getElementById('hsTipDesc').textContent    = desc;
+      document.getElementById('hsTipUrgence').textContent = urgence;
+      document.getElementById('hsTipUrgence').style.color = typeColors[type] || 'var(--text-secondary)';
+
+      hsTip.classList.add('vis');
+      mapTip.classList.remove('vis');
+    });
+
+    hs.addEventListener('mouseleave', () => hsTip.classList.remove('vis'));
+
+    // Sur mobile : tap pour afficher/masquer le tooltip
+    hs.addEventListener('click', e => {
+      e.stopPropagation();
+      if (hsTip.classList.contains('vis')) {
+        hsTip.classList.remove('vis');
+      } else {
+        hs.dispatchEvent(new MouseEvent('mouseenter'));
+      }
+    });
+  });
+
+  // Fermer le tooltip hotspot en cliquant ailleurs
+  document.getElementById('worldSvg').addEventListener('click', () => {
+    hsTip.classList.remove('vis');
+  });
+}
+
+function updateMapUI() {
+  const chips = document.getElementById('cChips');
+  const count = document.getElementById('cCount');
+  const mapLbl = document.getElementById('mapCountLbl');
+  const clearBtn = document.getElementById('clearBtn');
+  const nlLbl = document.getElementById('nlCLabel');
+  const n = sel.size;
+
+  count.textContent = `(${n})`;
+  mapLbl.textContent = `${n} sélectionné(s)`;
+  clearBtn.style.display = n > 0 ? 'inline' : 'none';
+
+  if (n === 0) {
+    chips.innerHTML = '<span class="empty-hint">Cliquez sur la carte pour commencer →</span>';
+    nlLbl.textContent = '(aucun — voir carte)';
+    return;
+  }
+
+  chips.innerHTML = [...sel].map(c =>
+    `<div class="c-chip" onclick="removeC('${c}')">${c} <span class="x">✕</span></div>`
+  ).join('');
+  nlLbl.textContent = `(${n} pays sélectionné${n > 1 ? 's' : ''})`;
+}
+
+function removeC(n) {
+  sel.delete(n);
+  document.querySelectorAll('.cp').forEach(p => { if (p.dataset.n === n) p.classList.remove('on'); });
+  updateMapUI();
+}
+
+function clearAll() {
+  sel.clear();
+  document.querySelectorAll('.cp.on').forEach(p => p.classList.remove('on'));
+  updateMapUI();
+}
+
+// ═══ NEWSLETTER ═══
+function setFreq(btn) {
+  btn.closest('.opts-row').querySelectorAll('.opt-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+}
+
+function tog(btn) { btn.classList.toggle('on'); }
+
+async function subscribe() {
+  const email = document.getElementById('nlEmail').value.trim();
+  if (!email || !email.includes('@')) { showToast("Email invalide", true); return; }
+  const freq = document.querySelector('.opts-row .opt-btn.on')?.dataset.v || 'hebdo';
+  const cats = [...document.querySelectorAll('#catOpts .opt-btn.on')].map(b => b.textContent.trim());
+  try {
+    if (window.storage?.set) await window.storage.set(`bunker:nl:${email}`, JSON.stringify({ email, freq, cats, countries: [...sel], date: new Date().toISOString() }));
+  } catch {}
+  showToast(`Inscription confirmée — Newsletter ${freq}`);
+  document.getElementById('nlEmail').value = '';
+}
+
+// ═══ STATS ═══
+function initStats() {
+  const obs = new IntersectionObserver(entries => entries.forEach(e => {
+    if (!e.isIntersecting) return;
+    const el = e.target;
+    const target = +el.dataset.target;
+    const sfx = el.dataset.sfx || '';
+    const t0 = performance.now();
+    const tick = t => {
+      const p = Math.min((t - t0) / 1400, 1);
+      const v = Math.floor(target * (1 - Math.pow(1 - p, 3)));
+      el.textContent = (target >= 1e6 ? (v/1e6).toFixed(1)+'M' : target >= 1e3 ? Math.floor(v/1e3)+'K' : v) + sfx;
+      if (p < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+    obs.unobserve(el);
+  }), { threshold: 0.4 });
+  document.querySelectorAll('.stat-num[data-target]').forEach(el => obs.observe(el));
+}
+
+// ═══ UTILS ═══
+function goTo(id) { document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' }); }
+
+function showToast(msg, err = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast${err ? ' err' : ''}`;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ═══ INIT ═══
+initBg();
+renderTrend();
+initMap();
+initStats();
+</script>
+</body>
+</html>

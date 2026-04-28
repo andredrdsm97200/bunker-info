@@ -1,0 +1,9 @@
+{
+  "name": "bunker-debunk",
+  "version": "1.0.0",
+  "description": "Bunker — Le vrai du faux de l'info",
+  "private": true,
+  "engines": {
+    "node": ">=18"
+  }
+}
